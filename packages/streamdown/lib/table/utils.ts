@@ -18,6 +18,18 @@ function extractCellText(node: Node): string {
     return "\n";
   }
 
+  if (element.tagName === "IMG") {
+    return (element as HTMLImageElement).alt;
+  }
+
+  // Image fallback labels and action controls are UI, not table cell data.
+  if (
+    element.tagName === "BUTTON" ||
+    element.getAttribute("data-streamdown") === "image-fallback"
+  ) {
+    return "";
+  }
+
   return Array.from(element.childNodes).map(extractCellText).join("");
 }
 
@@ -37,7 +49,8 @@ export const extractTableDataFromElement = (
   const bodyRows = tableElement.querySelectorAll("tbody tr");
   for (const row of bodyRows) {
     const rowData: string[] = [];
-    const cells = row.querySelectorAll("td");
+    // Row headers are valid table cells too (e.g. <th scope="row">).
+    const cells = row.querySelectorAll(":scope > th, :scope > td");
     for (const cell of cells) {
       rowData.push(extractCellText(cell).trim());
     }
@@ -241,24 +254,32 @@ export const escapeMarkdownTableCell = (cell: string): string => {
 
 export const tableDataToMarkdown = (data: TableData) => {
   const { headers, rows } = data;
+  const columnCount =
+    headers.length ||
+    rows.reduce((max, row) => Math.max(max, row.length), 0);
 
-  if (headers.length === 0) {
+  if (columnCount === 0) {
     return "";
   }
+
+  // GFM requires a header and delimiter row even when the source HTML table
+  // has no <thead>. Use an empty header row to preserve every body cell.
+  const outputHeaders =
+    headers.length > 0 ? headers : new Array<string>(columnCount).fill("");
 
   // Pre-allocate array with known size (headers + separator + rows)
   const markdownRows: string[] = new Array(rows.length + 2);
   let rowIndex = 0;
 
   // Add headers
-  const escapedHeaders = headers.map((h) => escapeMarkdownTableCell(h));
+  const escapedHeaders = outputHeaders.map((h) => escapeMarkdownTableCell(h));
   markdownRows[rowIndex] = `| ${escapedHeaders.join(" | ")} |`;
   rowIndex += 1;
 
   // Add separator row
   // OPTIMIZATION: Build separator more efficiently
-  const separatorParts = new Array(headers.length);
-  for (let i = 0; i < headers.length; i += 1) {
+  const separatorParts = new Array(columnCount);
+  for (let i = 0; i < columnCount; i += 1) {
     separatorParts[i] = "---";
   }
   markdownRows[rowIndex] = `| ${separatorParts.join(" | ")} |`;
