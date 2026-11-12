@@ -289,9 +289,9 @@ export const tableDataToMarkdown = (data: TableData) => {
   for (const row of rows) {
     // Pad row with empty strings if it's shorter than headers
     // OPTIMIZATION: Only pad if necessary
-    if (row.length < headers.length) {
-      const paddedRow = new Array(headers.length);
-      for (let i = 0; i < headers.length; i += 1) {
+    if (row.length < columnCount) {
+      const paddedRow = new Array(columnCount);
+      for (let i = 0; i < columnCount; i += 1) {
         paddedRow[i] = i < row.length ? escapeMarkdownTableCell(row[i]) : "";
       }
       markdownRows[rowIndex] = `| ${paddedRow.join(" | ")} |`;
