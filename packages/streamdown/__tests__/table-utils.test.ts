@@ -210,6 +210,11 @@ describe("Table Utils", () => {
       headers: [],
       rows: [["Revenue", "Acme logo"]],
     });
+    expect(tableDataToCSV(result)).toBe("Revenue,Acme logo");
+    expect(tableDataToTSV(result)).toBe("Revenue\\tAcme logo");
+    expect(tableDataToMarkdown(result)).toBe(
+      "|  |  |\\n| --- | --- |\\n| Revenue | Acme logo |"
+    );
   });
 
   describe("tableDataToCSV", () => {
