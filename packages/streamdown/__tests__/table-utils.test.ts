@@ -188,6 +188,30 @@ describe("Table Utils", () => {
     });
   });
 
+  it("keeps body row headers and image alt text while excluding image UI", () => {
+    tableElement.innerHTML = `
+      <tbody>
+        <tr>
+          <th scope="row">Revenue</th>
+          <td>
+            <div data-streamdown="image-wrapper">
+              <img alt="Acme logo" src="/logo.png" />
+              <span data-streamdown="image-fallback">Image not available</span>
+              <button title="Download image">Download</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    `;
+
+    const result = extractTableDataFromElement(tableElement);
+
+    expect(result).toEqual({
+      headers: [],
+      rows: [["Revenue", "Acme logo"]],
+    });
+  });
+
   describe("tableDataToCSV", () => {
     it("should convert simple table data to CSV", () => {
       const data: TableData = {
@@ -786,15 +810,17 @@ describe("Table Utils", () => {
       );
     });
 
-    it("should return empty string if no headers", () => {
+    it("should preserve rows when there is no header row", () => {
       const data: TableData = {
         headers: [],
-        rows: [["Value1", "Value2"]],
+        rows: [["Value1", "Value2"], ["Value3", "Value4"]],
       };
 
       const result = tableDataToMarkdown(data);
 
-      expect(result).toBe("");
+      expect(result).toBe(
+        "|  |  |\n| --- | --- |\n| Value1 | Value2 |\n| Value3 | Value4 |"
+      );
     });
 
     it("should handle empty rows", () => {
