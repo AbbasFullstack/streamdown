@@ -189,6 +189,7 @@ describe("Table Utils", () => {
   });
 
   it("keeps body row headers and image alt text while excluding image UI", () => {
+    const tableElement = document.createElement("table");
     tableElement.innerHTML = `
       <tbody>
         <tr>
